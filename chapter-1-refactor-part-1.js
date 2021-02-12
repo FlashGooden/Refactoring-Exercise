@@ -51,37 +51,49 @@ function playFor(aPerformance) {
 }
 
 function volumeCreditsFor(aPerformance) {
-   let volumeCredits = 0;
+   let result = 0;
 
    // add volume credits
-   volumeCredits += Math.max(aPerformance.audience - 30, 0);
+   result += Math.max(aPerformance.audience - 30, 0);
    // add extra credit for every ten comedy attendees
    if ("comedy" === playFor(aPerformance).type)
-      volumeCredits += Math.floor(aPerformance.audience / 5);
+      result += Math.floor(aPerformance.audience / 5);
 
-   return volumeCredits   
+   return result;
+}
+
+function usd(aNumber) {
+   return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+   }).format(aNumber / 100);
+}
+
+function totalVolumeCredits(invoice) {
+   let volumeCredits = 0;
+   for (let perf of invoice[0].performances) {
+      // print line for this order
+      volumeCredits += volumeCreditsFor(perf);
+   }
+   return volumeCredits;
 }
 
 function statement(invoice, plays) {
    let totalAmount = 0;
-   let volumeCredits = 0;
-   let result = `Statement for ${invoice.customer}\n`;
-   const format = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-   }).format;
+
+   let result = `Statement for ${invoice[0].customer}\n`;
 
    for (let perf of invoice[0].performances) {
       // print line for this order
-      volumeCredits += volumeCreditsFor(perf)
-      result += ` ${playFor(perf).name}: ${format(amountFor(perf) / 100)} (${
+      result += ` ${playFor(perf).name}: ${usd(amountFor(perf))} (${
          perf.audience
       } seats)\n`;
       totalAmount += amountFor(perf);
    }
-   result += `Amount owed is ${format(totalAmount / 100)}\n`;
-   result += `You earned ${volumeCredits} credits\n`;
+   
+   result += `Amount owed is ${usd(totalAmount)}\n`;
+   result += `You earned ${totalVolumeCredits(invoice)} credits\n`;
    console.log(result);
 }
 
